@@ -49,10 +49,22 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
 
   const onSubmit = (data: FormData) => {
     if (isEditing && song) {
-      updateSong(song.id, data);
+      updateSong(song.id, {
+        title: data.title,
+        artist: data.artist,
+        album: data.album,
+        genre: data.genre,
+        duration: data.duration
+      });
       toast.success("Song updated successfully");
     } else {
-      addSong(data);
+      addSong({
+        title: data.title,
+        artist: data.artist,
+        album: data.album,
+        genre: data.genre,
+        duration: data.duration
+      });
       toast.success("Song added successfully");
     }
     
