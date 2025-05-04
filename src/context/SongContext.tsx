@@ -1,5 +1,7 @@
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface Song {
   id: string;
@@ -12,69 +14,108 @@ export interface Song {
 
 interface SongContextType {
   songs: Song[];
-  addSong: (song: Omit<Song, 'id'>) => void;
-  updateSong: (id: string, song: Omit<Song, 'id'>) => void;
-  deleteSong: (id: string) => void;
+  loading: boolean;
+  addSong: (song: Omit<Song, 'id'>) => Promise<void>;
+  updateSong: (id: string, song: Omit<Song, 'id'>) => Promise<void>;
+  deleteSong: (id: string) => Promise<void>;
   filteredSongs: Song[];
   setFilter: (filter: { artist?: string; album?: string; genre?: string }) => void;
 }
 
 const SongContext = createContext<SongContextType | undefined>(undefined);
 
-// Initial mock data
-const initialSongs: Song[] = [
-  {
-    id: '1',
-    title: 'Bohemian Rhapsody',
-    artist: 'Queen',
-    album: 'A Night at the Opera',
-    genre: 'Rock',
-    duration: '5:55'
-  },
-  {
-    id: '2',
-    title: 'Billie Jean',
-    artist: 'Michael Jackson',
-    album: 'Thriller',
-    genre: 'Pop',
-    duration: '4:54'
-  },
-  {
-    id: '3',
-    title: 'Hotel California',
-    artist: 'Eagles',
-    album: 'Hotel California',
-    genre: 'Rock',
-    duration: '6:30'
-  },
-  {
-    id: '4',
-    title: 'Imagine',
-    artist: 'John Lennon',
-    album: 'Imagine',
-    genre: 'Pop',
-    duration: '3:04'
-  }
-];
-
 export const SongProvider = ({ children }: { children: ReactNode }) => {
-  const [songs, setSongs] = useState<Song[]>(initialSongs);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<{ artist?: string; album?: string; genre?: string }>({});
 
-  // Generate a random ID for new songs
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  // Fetch songs from Supabase
+  useEffect(() => {
+    const fetchSongs = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('songs')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setSongs(data || []);
+      } catch (error) {
+        console.error('Error fetching songs:', error);
+        toast.error('Failed to load songs. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const addSong = (song: Omit<Song, 'id'>) => {
-    const newSong = { ...song, id: generateId() };
-    setSongs([...songs, newSong]);
+    fetchSongs();
+  }, []);
+
+  // Add a new song to Supabase
+  const addSong = async (song: Omit<Song, 'id'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('songs')
+        .insert([song])
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        setSongs([data[0], ...songs]);
+      }
+    } catch (error) {
+      console.error('Error adding song:', error);
+      toast.error('Failed to add song. Please try again.');
+      throw error;
+    }
   };
 
-  const updateSong = (id: string, updatedSong: Omit<Song, 'id'>) => {
-    setSongs(songs.map(song => song.id === id ? { ...updatedSong, id } : song));
+  // Update an existing song in Supabase
+  const updateSong = async (id: string, updatedSong: Omit<Song, 'id'>) => {
+    try {
+      const { error } = await supabase
+        .from('songs')
+        .update(updatedSong)
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSongs(songs.map(song => song.id === id ? { ...updatedSong, id } : song));
+    } catch (error) {
+      console.error('Error updating song:', error);
+      toast.error('Failed to update song. Please try again.');
+      throw error;
+    }
   };
 
-  const deleteSong = (id: string) => {
-    setSongs(songs.filter(song => song.id !== id));
+  // Delete a song from Supabase
+  const deleteSong = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('songs')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSongs(songs.filter(song => song.id !== id));
+      toast.success('Song deleted successfully');
+    } catch (error) {
+      console.error('Error deleting song:', error);
+      toast.error('Failed to delete song. Please try again.');
+      throw error;
+    }
   };
 
   // Apply filters
@@ -86,7 +127,7 @@ export const SongProvider = ({ children }: { children: ReactNode }) => {
   });
 
   return (
-    <SongContext.Provider value={{ songs, addSong, updateSong, deleteSong, filteredSongs, setFilter }}>
+    <SongContext.Provider value={{ songs, loading, addSong, updateSong, deleteSong, filteredSongs, setFilter }}>
       {children}
     </SongContext.Provider>
   );

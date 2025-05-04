@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -47,36 +48,41 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    if (isEditing && song) {
-      updateSong(song.id, {
-        title: data.title,
-        artist: data.artist,
-        album: data.album,
-        genre: data.genre,
-        duration: data.duration
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (isEditing && song) {
+        await updateSong(song.id, {
+          title: data.title,
+          artist: data.artist,
+          album: data.album,
+          genre: data.genre,
+          duration: data.duration
+        });
+        toast.success("Song updated successfully");
+      } else {
+        await addSong({
+          title: data.title,
+          artist: data.artist,
+          album: data.album,
+          genre: data.genre,
+          duration: data.duration
+        });
+        toast.success("Song added successfully");
+      }
+      
+      form.reset({
+        title: "",
+        artist: "",
+        album: "",
+        genre: "",
+        duration: "",
       });
-      toast.success("Song updated successfully");
-    } else {
-      addSong({
-        title: data.title,
-        artist: data.artist,
-        album: data.album,
-        genre: data.genre,
-        duration: data.duration
-      });
-      toast.success("Song added successfully");
+      
+      onSave();
+    } catch (error) {
+      console.error("Error saving song:", error);
+      toast.error("Failed to save song. Please try again.");
     }
-    
-    form.reset({
-      title: "",
-      artist: "",
-      album: "",
-      genre: "",
-      duration: "",
-    });
-    
-    onSave();
   };
 
   return (

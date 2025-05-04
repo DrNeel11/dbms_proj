@@ -17,7 +17,15 @@ interface SongListProps {
 }
 
 const SongList = ({ onEdit }: SongListProps) => {
-  const { filteredSongs, deleteSong } = useSongContext();
+  const { filteredSongs, deleteSong, loading } = useSongContext();
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-pulse">Loading songs...</div>
+      </div>
+    );
+  }
 
   if (filteredSongs.length === 0) {
     return (
@@ -59,7 +67,13 @@ const SongList = ({ onEdit }: SongListProps) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => deleteSong(song.id)}
+                  onClick={async () => {
+                    try {
+                      await deleteSong(song.id);
+                    } catch (error) {
+                      // Error is already handled in the context
+                    }
+                  }}
                   className="text-red-500 hover:text-red-700"
                 >
                   <Trash className="h-4 w-4" />
