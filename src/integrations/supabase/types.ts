@@ -80,6 +80,7 @@ export type Database = {
           duration: string
           genre: string
           id: string
+          rating: number | null
           title: string
           updated_at: string | null
           user_id: string | null
@@ -91,6 +92,7 @@ export type Database = {
           duration: string
           genre: string
           id?: string
+          rating?: number | null
           title: string
           updated_at?: string | null
           user_id?: string | null
@@ -102,6 +104,7 @@ export type Database = {
           duration?: string
           genre?: string
           id?: string
+          rating?: number | null
           title?: string
           updated_at?: string | null
           user_id?: string | null

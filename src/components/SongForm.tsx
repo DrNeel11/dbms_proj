@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -24,6 +23,7 @@ const formSchema = z.object({
   album: z.string().min(1, "Album is required"),
   genre: z.string().min(1, "Genre is required"),
   duration: z.string().regex(/^\d+:\d{2}$/, "Format must be m:ss or mm:ss"),
+  rating: z.number().min(0).max(5).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -45,6 +45,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
       album: song?.album || "",
       genre: song?.genre || "",
       duration: song?.duration || "",
+      rating: song?.rating || 0,
     },
   });
 
@@ -56,7 +57,8 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
           artist: data.artist,
           album: data.album,
           genre: data.genre,
-          duration: data.duration
+          duration: data.duration,
+          rating: data.rating
         });
         toast.success("Song updated successfully");
       } else {
@@ -65,7 +67,8 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
           artist: data.artist,
           album: data.album,
           genre: data.genre,
-          duration: data.duration
+          duration: data.duration,
+          rating: data.rating
         });
         toast.success("Song added successfully");
       }
@@ -76,6 +79,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
         album: "",
         genre: "",
         duration: "",
+        rating: 0,
       });
       
       onSave();
@@ -88,6 +92,15 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900 p-4 mb-4 rounded-md">
+          <h2 className="text-xl font-semibold mb-2 text-purple-800 dark:text-purple-300">
+            {isEditing ? "Edit Song" : "Add New Song"}
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {isEditing ? "Update the song details below" : "Enter the details of your new song"}
+          </p>
+        </div>
+        
         <FormField
           control={form.control}
           name="title"
@@ -95,7 +108,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder="Song title" {...field} />
+                <Input placeholder="Song title" {...field} className="border-purple-200 focus:border-purple-400 dark:border-purple-800" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -109,7 +122,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
             <FormItem>
               <FormLabel>Artist</FormLabel>
               <FormControl>
-                <Input placeholder="Artist name" {...field} />
+                <Input placeholder="Artist name" {...field} className="border-purple-200 focus:border-purple-400 dark:border-purple-800" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -123,7 +136,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
             <FormItem>
               <FormLabel>Album</FormLabel>
               <FormControl>
-                <Input placeholder="Album name" {...field} />
+                <Input placeholder="Album name" {...field} className="border-purple-200 focus:border-purple-400 dark:border-purple-800" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -137,7 +150,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
             <FormItem>
               <FormLabel>Genre</FormLabel>
               <FormControl>
-                <Input placeholder="Genre" {...field} />
+                <Input placeholder="Genre" {...field} className="border-purple-200 focus:border-purple-400 dark:border-purple-800" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -151,7 +164,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
             <FormItem>
               <FormLabel>Duration</FormLabel>
               <FormControl>
-                <Input placeholder="3:45" {...field} />
+                <Input placeholder="3:45" {...field} className="border-purple-200 focus:border-purple-400 dark:border-purple-800" />
               </FormControl>
               <FormDescription>
                 Format: minutes:seconds (e.g., 3:45)
@@ -162,7 +175,7 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
         />
 
         <div className="flex justify-end">
-          <Button type="submit">
+          <Button type="submit" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
             {isEditing ? "Update Song" : "Add Song"}
           </Button>
         </div>

@@ -10,6 +10,7 @@ export interface Song {
   album: string;
   genre: string;
   duration: string;
+  rating?: number;
 }
 
 interface SongContextType {
@@ -58,39 +59,19 @@ export const SongProvider = ({ children }: { children: ReactNode }) => {
   // Add a new song to Supabase
   const addSong = async (song: Omit<Song, 'id'>) => {
     try {
-      // Get the current user's session
-      const { data: { session } } = await supabase.auth.getSession();
+      // Insert song without user_id since we modified the RLS policy
+      const { data, error } = await supabase
+        .from('songs')
+        .insert([song])
+        .select();
       
-      if (!session) {
-        // If no session, use anonymous access (the policy allows all users to view)
-        const { data, error } = await supabase
-          .from('songs')
-          .insert([{ ...song, user_id: null }])
-          .select();
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          setSongs([data[0], ...songs]);
-          toast.success('Song added successfully');
-        }
-      } else {
-        // If session exists, set the user_id
-        const { data, error } = await supabase
-          .from('songs')
-          .insert([{ ...song, user_id: session.user.id }])
-          .select();
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          setSongs([data[0], ...songs]);
-          toast.success('Song added successfully');
-        }
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        setSongs([data[0], ...songs]);
+        toast.success('Song added successfully');
       }
     } catch (error) {
       console.error('Error adding song:', error);

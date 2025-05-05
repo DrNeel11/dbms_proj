@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, Star } from "lucide-react";
 import AddToPlaylist from "./AddToPlaylist";
 
 interface SongListProps {
@@ -18,7 +18,15 @@ interface SongListProps {
 }
 
 const SongList = ({ onEdit }: SongListProps) => {
-  const { filteredSongs, deleteSong, loading } = useSongContext();
+  const { filteredSongs, deleteSong, loading, updateSong } = useSongContext();
+
+  const handleRatingChange = async (song: Song, rating: number) => {
+    try {
+      await updateSong(song.id, { ...song, rating });
+    } catch (error) {
+      console.error("Error updating song rating:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -30,38 +38,59 @@ const SongList = ({ onEdit }: SongListProps) => {
 
   if (filteredSongs.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
         No songs found. Add some songs or adjust your filters.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-700">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-slate-100 dark:bg-slate-800">
           <TableRow>
             <TableHead>Title</TableHead>
             <TableHead>Artist</TableHead>
             <TableHead>Album</TableHead>
             <TableHead>Genre</TableHead>
             <TableHead>Duration</TableHead>
+            <TableHead>Rating</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredSongs.map((song) => (
-            <TableRow key={song.id}>
+            <TableRow key={song.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
               <TableCell className="font-medium">{song.title}</TableCell>
               <TableCell>{song.artist}</TableCell>
               <TableCell>{song.album}</TableCell>
               <TableCell>{song.genre}</TableCell>
               <TableCell>{song.duration}</TableCell>
-              <TableCell className="text-right space-x-2">
+              <TableCell>
+                <div className="flex items-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Button
+                      key={star}
+                      variant="ghost"
+                      size="sm"
+                      className={`p-1 ${
+                        song.rating && star <= song.rating
+                          ? "text-yellow-500"
+                          : "text-gray-300 dark:text-gray-600"
+                      }`}
+                      onClick={() => handleRatingChange(song, star)}
+                    >
+                      <Star className="h-4 w-4" />
+                    </Button>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell className="text-right space-x-1">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onEdit(song)}
+                  className="hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -76,7 +105,7 @@ const SongList = ({ onEdit }: SongListProps) => {
                       // Error is already handled in the context
                     }
                   }}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                 >
                   <Trash className="h-4 w-4" />
                 </Button>
