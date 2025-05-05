@@ -25,9 +25,10 @@ type FormData = z.infer<typeof formSchema>;
 
 interface PlaylistFormProps {
   onSuccess?: (playlistId: string) => void;
+  onCancel?: () => void;
 }
 
-const PlaylistForm = ({ onSuccess }: PlaylistFormProps) => {
+const PlaylistForm = ({ onSuccess, onCancel }: PlaylistFormProps) => {
   const { createPlaylist } = usePlaylistContext();
 
   const form = useForm<FormData>({
@@ -90,8 +91,18 @@ const PlaylistForm = ({ onSuccess }: PlaylistFormProps) => {
           )}
         />
 
-        <div className="flex justify-end">
-          <Button type="submit">Create Playlist</Button>
+        <div className="flex justify-end gap-2">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button 
+            type="submit"
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+          >
+            Create Playlist
+          </Button>
         </div>
       </form>
     </Form>
