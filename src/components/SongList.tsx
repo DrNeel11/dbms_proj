@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Edit, Trash } from "lucide-react";
+import AddToPlaylist from "./AddToPlaylist";
 
 interface SongListProps {
   onEdit: (song: Song) => void;
@@ -64,6 +65,7 @@ const SongList = ({ onEdit }: SongListProps) => {
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
+                <AddToPlaylist songId={song.id} />
                 <Button
                   variant="ghost"
                   size="sm"

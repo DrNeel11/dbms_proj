@@ -58,17 +58,39 @@ export const SongProvider = ({ children }: { children: ReactNode }) => {
   // Add a new song to Supabase
   const addSong = async (song: Omit<Song, 'id'>) => {
     try {
-      const { data, error } = await supabase
-        .from('songs')
-        .insert([song])
-        .select();
+      // Get the current user's session
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (error) {
-        throw error;
-      }
-      
-      if (data && data.length > 0) {
-        setSongs([data[0], ...songs]);
+      if (!session) {
+        // If no session, use anonymous access (the policy allows all users to view)
+        const { data, error } = await supabase
+          .from('songs')
+          .insert([{ ...song, user_id: null }])
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          setSongs([data[0], ...songs]);
+          toast.success('Song added successfully');
+        }
+      } else {
+        // If session exists, set the user_id
+        const { data, error } = await supabase
+          .from('songs')
+          .insert([{ ...song, user_id: session.user.id }])
+          .select();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          setSongs([data[0], ...songs]);
+          toast.success('Song added successfully');
+        }
       }
     } catch (error) {
       console.error('Error adding song:', error);
@@ -90,6 +112,7 @@ export const SongProvider = ({ children }: { children: ReactNode }) => {
       }
       
       setSongs(songs.map(song => song.id === id ? { ...updatedSong, id } : song));
+      toast.success('Song updated successfully');
     } catch (error) {
       console.error('Error updating song:', error);
       toast.error('Failed to update song. Please try again.');
