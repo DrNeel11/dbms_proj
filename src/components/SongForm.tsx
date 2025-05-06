@@ -31,9 +31,10 @@ type FormData = z.infer<typeof formSchema>;
 interface SongFormProps {
   song: Song | null;
   onSave: () => void;
+  onCancel: () => void; // Added this line to include the onCancel prop
 }
 
-const SongForm = ({ song, onSave }: SongFormProps) => {
+const SongForm = ({ song, onSave, onCancel }: SongFormProps) => {
   const { addSong, updateSong } = useSongContext();
   const isEditing = !!song;
 
@@ -174,7 +175,16 @@ const SongForm = ({ song, onSave }: SongFormProps) => {
           )}
         />
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {/* Added cancel button that calls onCancel */}
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel} 
+            className="border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-900"
+          >
+            Cancel
+          </Button>
           <Button type="submit" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
             {isEditing ? "Update Song" : "Add Song"}
           </Button>
