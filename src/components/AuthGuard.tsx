@@ -1,6 +1,6 @@
 
-import React, { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { ReactNode, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 interface AuthGuardProps {
@@ -9,6 +9,14 @@ interface AuthGuardProps {
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const { user, loading, userProfile } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // If not loading and no user, redirect to auth
+    if (!loading && !user) {
+      navigate("/auth", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (

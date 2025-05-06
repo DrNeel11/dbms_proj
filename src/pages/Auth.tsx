@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -16,6 +17,14 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const { user } = useAuth();
+  
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +46,7 @@ const Auth = () => {
       }
       
       toast.success("Signed in successfully!");
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error: any) {
       toast.error(error.message || "Error signing in");
     } finally {
@@ -64,8 +73,21 @@ const Auth = () => {
         throw error;
       }
       
-      toast.success("Signed up successfully! Check your email to confirm your account.");
-      setAuthMode("signin");
+      if (data.user && !data.user.identities?.length) {
+        toast.error("Account already exists. Please sign in instead.");
+        setAuthMode("signin");
+      } else {
+        toast.success("Signed up successfully! Check your email to confirm your account.");
+        // Immediately sign in after signup for better UX
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (!signInError) {
+          navigate("/", { replace: true });
+        }
+      }
     } catch (error: any) {
       toast.error(error.message || "Error signing up");
     } finally {
