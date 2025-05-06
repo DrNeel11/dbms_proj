@@ -51,87 +51,91 @@ const MusicLibrary = () => {
         </Card>
 
         <div className="flex justify-between items-center mb-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="bg-purple-100 dark:bg-slate-800">
-              <TabsTrigger 
-                value="songs" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
-                Songs ({filteredSongs.length})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="playlists" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
-                Playlists
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <div className="flex gap-2">
-            {activeTab === "songs" && (
-              <Button 
-                onClick={handleAddNewSong}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-              >
-                <Plus className="mr-1 h-4 w-4" />
-                Add New Song
-              </Button>
-            )}
-            {activeTab === "playlists" && (
-              <Button 
-                onClick={handleCreatePlaylist}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-              >
-                <ListPlus className="mr-1 h-4 w-4" />
-                New Playlist
-              </Button>
-            )}
+          <div className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="flex justify-between items-center">
+                <TabsList className="bg-purple-100 dark:bg-slate-800">
+                  <TabsTrigger 
+                    value="songs" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                    Songs ({filteredSongs.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="playlists" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                    Playlists
+                  </TabsTrigger>
+                </TabsList>
+                
+                <div className="flex gap-2">
+                  {activeTab === "songs" && (
+                    <Button 
+                      onClick={handleAddNewSong}
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      Add New Song
+                    </Button>
+                  )}
+                  {activeTab === "playlists" && (
+                    <Button 
+                      onClick={handleCreatePlaylist}
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                    >
+                      <ListPlus className="mr-1 h-4 w-4" />
+                      New Playlist
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <TabsContent value="songs" className="mt-4">
+                {showSongForm ? (
+                  <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
+                    <CardContent className="pt-6">
+                      <SongForm 
+                        song={editingSong} 
+                        onSave={handleSongSave}
+                        onCancel={() => {
+                          setEditingSong(null);
+                          setShowSongForm(false);
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
+                    <CardContent className="pt-6">
+                      <SongList onEdit={(song) => {
+                        setEditingSong(song);
+                        setShowSongForm(true);
+                      }} />
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="playlists" className="mt-4">
+                {showPlaylistForm ? (
+                  <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
+                    <CardContent className="pt-6">
+                      <PlaylistForm 
+                        onSuccess={handlePlaylistCreated}
+                        onCancel={() => setShowPlaylistForm(false)} 
+                      />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
+                    <CardContent className="pt-6">
+                      <PlaylistList />
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
-
-        <TabsContent value="songs" className="mt-0">
-          {showSongForm ? (
-            <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
-              <CardContent className="pt-6">
-                <SongForm 
-                  song={editingSong} 
-                  onSave={handleSongSave}
-                  onCancel={() => {
-                    setEditingSong(null);
-                    setShowSongForm(false);
-                  }}
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
-              <CardContent className="pt-6">
-                <SongList onEdit={(song) => {
-                  setEditingSong(song);
-                  setShowSongForm(true);
-                }} />
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="playlists" className="mt-0">
-          {showPlaylistForm ? (
-            <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
-              <CardContent className="pt-6">
-                <PlaylistForm 
-                  onSuccess={handlePlaylistCreated}
-                  onCancel={() => setShowPlaylistForm(false)} 
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border border-purple-100 dark:border-purple-900 bg-white dark:bg-slate-800 shadow-md">
-              <CardContent className="pt-6">
-                <PlaylistList />
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
       </div>
     </PlaylistProvider>
   );
