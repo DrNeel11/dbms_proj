@@ -43,6 +43,7 @@ export const PlaylistProvider = ({ children }: { children: ReactNode }) => {
         if (!session) {
           // If no session, return empty array
           setPlaylists([]);
+          setLoading(false);
           return;
         }
         

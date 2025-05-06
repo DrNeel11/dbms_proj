@@ -15,7 +15,7 @@ import { Plus, Music, ListPlus, LogOut, User } from "lucide-react";
 
 const MusicLibrary = () => {
   const { filteredSongs } = useSongContext();
-  const { user, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [activeTab, setActiveTab] = useState("songs");
   const [showSongForm, setShowSongForm] = useState(false);
@@ -50,7 +50,7 @@ const MusicLibrary = () => {
           <div className="flex items-center">
             <User className="h-5 w-5 mr-2 text-purple-500" />
             <span className="text-sm text-gray-600 dark:text-gray-300">
-              {user?.email}
+              {userProfile?.display_name || user?.email}
             </span>
           </div>
           <Button 

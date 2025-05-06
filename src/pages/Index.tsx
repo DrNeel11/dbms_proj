@@ -5,7 +5,7 @@ import { SongProvider } from "@/context/SongContext";
 import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 dark:from-slate-900 dark:to-indigo-950 px-4 py-8">
@@ -15,7 +15,7 @@ const Index = () => {
             Music Library
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Welcome {user?.email} to your music collection
+            Welcome {userProfile?.display_name || user?.email} to your music collection
           </p>
         </header>
         

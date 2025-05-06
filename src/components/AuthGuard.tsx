@@ -8,7 +8,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, userProfile } = useAuth();
 
   if (loading) {
     return (
@@ -20,6 +20,16 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // If we have a user but no profile, it might mean that the trigger
+  // hasn't created the profile yet - we can show a loading state
+  if (user && !userProfile && !loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-pulse">Setting up your profile...</div>
+      </div>
+    );
   }
 
   return <>{children}</>;
