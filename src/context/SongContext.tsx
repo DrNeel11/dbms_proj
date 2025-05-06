@@ -104,15 +104,20 @@ export const SongProvider = ({ children }: { children: ReactNode }) => {
   // Delete a song from Supabase
   const deleteSong = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('songs')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select(); // Add this to expose silent failures
       
       if (error) {
         throw error;
       }
-      
+  
+      if (!data || data.length === 0) {
+        console.warn('No row deleted. Possibly blocked by RLS or ID mismatch.');
+      }
+  
       setSongs(songs.filter(song => song.id !== id));
       toast.success('Song deleted successfully');
     } catch (error) {
@@ -121,6 +126,7 @@ export const SongProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     }
   };
+  
 
   // Apply filters
   const filteredSongs = songs.filter(song => {
