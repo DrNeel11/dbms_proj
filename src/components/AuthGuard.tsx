@@ -14,19 +14,24 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   useEffect(() => {
     // If not loading and no user, redirect to auth
     if (!loading && !user) {
+      console.log("AuthGuard: No user detected, redirecting to /auth");
       navigate("/auth", { replace: true });
     }
   }, [user, loading, navigate]);
 
+  // Debug output
+  console.log("AuthGuard state:", { loading, hasUser: !!user, hasProfile: !!userProfile });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse">Loading...</div>
+        <div className="animate-pulse">Loading authentication...</div>
       </div>
     );
   }
 
   if (!user) {
+    console.log("AuthGuard: Rendering Navigate to /auth");
     return <Navigate to="/auth" replace />;
   }
 
@@ -40,6 +45,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     );
   }
 
+  console.log("AuthGuard: Allowing access to protected route");
   return <>{children}</>;
 };
 

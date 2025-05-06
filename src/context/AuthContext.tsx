@@ -29,41 +29,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch user profile from the profiles table
   const fetchUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-    if (error) {
-      console.error("Error fetching user profile:", error);
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return null;
+      }
+
+      return data as UserProfile;
+    } catch (err) {
+      console.error("Exception fetching profile:", err);
       return null;
     }
-
-    return data as UserProfile;
   };
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state change event:", event);
         setSession(session);
         setUser(session?.user ?? null);
         
         // If user logs in, fetch their profile
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (session?.user) {
           const profile = await fetchUserProfile(session.user.id);
           setUserProfile(profile);
-          toast.success("Signed in successfully");
+          if (event === 'SIGNED_IN') {
+            toast.success("Signed in successfully");
+          }
         } else if (event === 'SIGNED_OUT') {
           setUserProfile(null);
           toast.info("Signed out successfully");
         }
+        
+        // Update loading state after processing auth change
+        setLoading(false);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log("Initial session check:", session ? "Found session" : "No session");
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -82,9 +94,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUserProfile(null);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Error signing out");
+      console.error("Error signing out:", error);
+    } else {
+      setUserProfile(null);
+    }
   };
+
+  // Debug state
+  console.log("Auth context state:", { 
+    loading, 
+    user: user ? "User exists" : "No user", 
+    profile: userProfile ? "Profile exists" : "No profile"
+  });
 
   return (
     <AuthContext.Provider value={{ session, user, userProfile, loading, signOut }}>

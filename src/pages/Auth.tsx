@@ -21,7 +21,9 @@ const Auth = () => {
   
   // Redirect if user is already logged in
   useEffect(() => {
+    console.log("Auth page - user state:", user ? "User logged in" : "No user");
     if (user) {
+      console.log("Auth page redirecting to / due to existing user");
       navigate("/", { replace: true });
     }
   }, [user, navigate]);
@@ -36,6 +38,7 @@ const Auth = () => {
     
     try {
       setLoading(true);
+      console.log("Attempting sign in for:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -45,9 +48,11 @@ const Auth = () => {
         throw error;
       }
       
+      console.log("Sign in successful:", data.user?.id);
       toast.success("Signed in successfully!");
       navigate("/", { replace: true });
     } catch (error: any) {
+      console.error("Sign in error:", error.message);
       toast.error(error.message || "Error signing in");
     } finally {
       setLoading(false);
@@ -64,6 +69,7 @@ const Auth = () => {
     
     try {
       setLoading(true);
+      console.log("Attempting sign up for:", email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -74,9 +80,11 @@ const Auth = () => {
       }
       
       if (data.user && !data.user.identities?.length) {
+        console.log("Account already exists");
         toast.error("Account already exists. Please sign in instead.");
         setAuthMode("signin");
       } else {
+        console.log("Sign up successful:", data.user?.id);
         toast.success("Signed up successfully! Check your email to confirm your account.");
         // Immediately sign in after signup for better UX
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -89,6 +97,7 @@ const Auth = () => {
         }
       }
     } catch (error: any) {
+      console.error("Sign up error:", error.message);
       toast.error(error.message || "Error signing up");
     } finally {
       setLoading(false);
