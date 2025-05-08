@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -31,12 +31,14 @@ type FormData = z.infer<typeof formSchema>;
 interface SongFormProps {
   song: Song | null;
   onSave: () => void;
-  onCancel: () => void; // Added this line to include the onCancel prop
+  onCancel: () => void;
 }
 
 const SongForm = ({ song, onSave, onCancel }: SongFormProps) => {
   const { addSong, updateSong } = useSongContext();
   const isEditing = !!song;
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -50,26 +52,70 @@ const SongForm = ({ song, onSave, onCancel }: SongFormProps) => {
     },
   });
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('audio/')) {
+        setAudioFile(file);
+      } else {
+        toast.error('Please select an audio file');
+      }
+    }
+  };
+
+  const uploadAudioFile = async (file: File): Promise<string | null> => {
+    try {
+      setUploading(true);
+      const timestamp = new Date().getTime();
+      const filename = `${timestamp}_${file.name}`;
+      const filePath = `audio/${filename}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('songs')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('songs')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading audio file:', error);
+      toast.error('Failed to upload audio file');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     try {
+      let audioPath = song?.audio_path;
+
+      if (audioFile) {
+        const uploadedUrl = await uploadAudioFile(audioFile);
+        if (!uploadedUrl) {
+          toast.error('Failed to upload audio file');
+          return;
+        }
+        audioPath = uploadedUrl;
+      }
+
       if (isEditing && song) {
         await updateSong(song.id, {
-          title: data.title,
-          artist: data.artist,
-          album: data.album,
-          genre: data.genre,
-          duration: data.duration,
-          rating: data.rating
+          ...data,
+          audio_path: audioPath,
         });
         toast.success("Song updated successfully");
       } else {
         await addSong({
-          title: data.title,
-          artist: data.artist,
-          album: data.album,
-          genre: data.genre,
-          duration: data.duration,
-          rating: data.rating
+          ...data,
+          audio_path: audioPath,
         });
         toast.success("Song added successfully");
       }
@@ -82,6 +128,7 @@ const SongForm = ({ song, onSave, onCancel }: SongFormProps) => {
         duration: "",
         rating: 0,
       });
+      setAudioFile(null);
       
       onSave();
     } catch (error) {
@@ -175,17 +222,37 @@ const SongForm = ({ song, onSave, onCancel }: SongFormProps) => {
           )}
         />
 
+        <FormItem>
+          <FormLabel>Audio File</FormLabel>
+          <FormControl>
+            <Input
+              type="file"
+              accept="audio/*"
+              onChange={handleFileChange}
+              className="border-purple-200 focus:border-purple-400 dark:border-purple-800"
+              disabled={uploading}
+            />
+          </FormControl>
+          <FormDescription>
+            {uploading ? 'Uploading...' : audioFile ? `Selected: ${audioFile.name}` : 'Select an audio file'}
+          </FormDescription>
+        </FormItem>
+
         <div className="flex justify-end gap-2">
-          {/* Added cancel button that calls onCancel */}
           <Button 
             type="button" 
             variant="outline" 
             onClick={onCancel} 
             className="border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-900"
+            disabled={uploading}
           >
             Cancel
           </Button>
-          <Button type="submit" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
+          <Button 
+            type="submit" 
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+            disabled={uploading}
+          >
             {isEditing ? "Update Song" : "Add Song"}
           </Button>
         </div>

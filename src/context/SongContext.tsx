@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -10,7 +9,11 @@ export interface Song {
   album: string;
   genre: string;
   duration: string;
-  rating?: number;
+  rating: number | null;
+  audio_path: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  user_id?: string | null;
 }
 
 interface SongContextType {
@@ -62,7 +65,10 @@ export const SongProvider = ({ children }: { children: ReactNode }) => {
       // Insert song without user_id since we modified the RLS policy
       const { data, error } = await supabase
         .from('songs')
-        .insert([song])
+        .insert([{
+          ...song,
+          audio_path: song.audio_path || null
+        }])
         .select();
       
       if (error) {

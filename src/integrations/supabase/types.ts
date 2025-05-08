@@ -108,6 +108,7 @@ export type Database = {
           title: string
           updated_at: string | null
           user_id: string | null
+          audio_path: string | null
         }
         Insert: {
           album: string
@@ -120,6 +121,7 @@ export type Database = {
           title: string
           updated_at?: string | null
           user_id?: string | null
+          audio_path?: string | null
         }
         Update: {
           album?: string
@@ -132,6 +134,7 @@ export type Database = {
           title?: string
           updated_at?: string | null
           user_id?: string | null
+          audio_path?: string | null
         }
         Relationships: []
       }

@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState, useRef } from "react";
 import { useSongContext, Song } from "@/context/SongContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +9,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Trash, Star } from "lucide-react";
+import { Edit, Trash, Star, Play, Pause } from "lucide-react";
 import AddToPlaylist from "./AddToPlaylist";
+import { toast } from "sonner";
+
+// Add type declarations for the electron window object
+declare global {
+  interface Window {
+    electron?: {
+      saveAudioFile: (file: File, filename: string) => Promise<void>;
+      getAudioUrl: (path: string) => string;
+    };
+  }
+}
 
 interface SongListProps {
   onEdit: (song: Song) => void;
@@ -19,12 +29,46 @@ interface SongListProps {
 
 const SongList = ({ onEdit }: SongListProps) => {
   const { filteredSongs, deleteSong, loading, updateSong } = useSongContext();
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleRatingChange = async (song: Song, rating: number) => {
     try {
       await updateSong(song.id, { ...song, rating });
     } catch (error) {
       console.error("Error updating song rating:", error);
+    }
+  };
+
+  const handlePlayPause = (song: Song) => {
+    if (currentlyPlaying === song.id) {
+      // Pause current song
+      if (audioRef.current) {
+        audioRef.current.pause();
+        setCurrentlyPlaying(null);
+      }
+    } else {
+      // Stop any currently playing song
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      // Play new song
+      if (song.audio_path) {
+        if (audioRef.current) {
+          audioRef.current.src = song.audio_path;
+          audioRef.current.play()
+            .then(() => {
+              setCurrentlyPlaying(song.id);
+            })
+            .catch((error) => {
+              console.error('Error playing audio:', error);
+              toast.error('Failed to play audio file');
+            });
+        }
+      } else {
+        toast.error('No audio file available for this song');
+      }
     }
   };
 
@@ -46,9 +90,11 @@ const SongList = ({ onEdit }: SongListProps) => {
 
   return (
     <div className="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-700">
+      <audio ref={audioRef} />
       <Table>
         <TableHeader className="bg-slate-100 dark:bg-slate-800">
           <TableRow>
+            <TableHead>Play</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Artist</TableHead>
             <TableHead>Album</TableHead>
@@ -61,6 +107,20 @@ const SongList = ({ onEdit }: SongListProps) => {
         <TableBody>
           {filteredSongs.map((song) => (
             <TableRow key={song.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handlePlayPause(song)}
+                  className="p-1"
+                >
+                  {currentlyPlaying === song.id ? (
+                    <Pause className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                </Button>
+              </TableCell>
               <TableCell className="font-medium">{song.title}</TableCell>
               <TableCell>{song.artist}</TableCell>
               <TableCell>{song.album}</TableCell>
